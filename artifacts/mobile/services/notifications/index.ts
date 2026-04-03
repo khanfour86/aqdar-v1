@@ -1,31 +1,38 @@
-/**
- * Notifications Service — stub for future Expo Notifications integration
- *
- * Future integrations:
- * - expo-notifications
- * - Push notification scheduling for daily check-ins
- * - Streak reminders
- * - Craving alerts
- */
+import { INotificationClient } from "@/services/contracts";
 
-export const notificationService = {
-  async requestPermissions(): Promise<boolean> {
+/**
+ * Notifications Service — stub implementing INotificationClient
+ *
+ * Future integration: expo-notifications + Firebase Cloud Messaging
+ */
+class StubNotificationClient implements INotificationClient {
+  async requestPermission(): Promise<boolean> {
     // TODO: const { status } = await Notifications.requestPermissionsAsync()
     return false;
-  },
+  }
 
-  async scheduleStreakReminder(): Promise<void> {
+  async scheduleDaily(
+    hour: number,
+    minute: number,
+    title: string,
+    body: string
+  ): Promise<void> {
     // TODO: Notifications.scheduleNotificationAsync({
-    //   content: { title: "أنا أقدر", body: "تذكر التزامك اليوم!" },
-    //   trigger: { hour: 9, minute: 0, repeats: true }
+    //   content: { title, body },
+    //   trigger: { hour, minute, repeats: true }
     // })
-  },
-
-  async scheduleCravingCheck(): Promise<void> {
-    // TODO: Schedule periodic craving resistance check-ins
-  },
+    if (__DEV__) console.log("[Notifications] schedule:", { hour, minute, title, body });
+  }
 
   async cancelAll(): Promise<void> {
     // TODO: Notifications.cancelAllScheduledNotificationsAsync()
-  },
-};
+  }
+
+  async getToken(): Promise<string | null> {
+    // TODO: Notifications.getExpoPushTokenAsync()
+    return null;
+  }
+}
+
+export const notificationService: INotificationClient =
+  new StubNotificationClient();

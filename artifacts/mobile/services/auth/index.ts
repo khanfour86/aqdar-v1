@@ -1,59 +1,68 @@
+import { IAuthClient, AuthUser } from "@/services/contracts";
+
 /**
- * Auth Service — stub for future Supabase/Firebase Auth integration
+ * Auth Service — stub implementing IAuthClient
  *
  * Future integrations:
- * - Apple Sign In via expo-apple-authentication
- * - Google Sign In via @react-native-google-signin/google-signin
- * - Facebook Login via react-native-fbsdk-next
- * - Supabase Auth
+ * - Apple Sign In via expo-apple-authentication + Supabase
+ * - Google Sign In via @react-native-google-signin
+ * - Facebook via react-native-fbsdk-next
  */
+class StubAuthClient implements IAuthClient {
+  private _user: AuthUser | null = null;
+  private _listeners: Array<(u: AuthUser | null) => void> = [];
 
-export interface AuthUser {
-  id: string;
-  email?: string;
-  displayName?: string;
-  provider: "apple" | "google" | "facebook" | "guest";
-}
-
-export const authService = {
   async signInWithApple(): Promise<AuthUser> {
-    // TODO: Integrate expo-apple-authentication + Supabase
-    return {
-      id: "guest_" + Date.now(),
+    const user: AuthUser = {
+      id: `apple_${Date.now()}`,
       provider: "apple",
     };
-  },
+    // TODO: expo-apple-authentication + Supabase signInWithIdToken
+    this._setUser(user);
+    return user;
+  }
 
   async signInWithGoogle(): Promise<AuthUser> {
-    // TODO: Integrate @react-native-google-signin + Supabase
-    return {
-      id: "guest_" + Date.now(),
+    const user: AuthUser = {
+      id: `google_${Date.now()}`,
       provider: "google",
     };
-  },
+    // TODO: @react-native-google-signin + Supabase signInWithIdToken
+    this._setUser(user);
+    return user;
+  }
 
   async signInWithFacebook(): Promise<AuthUser> {
-    // TODO: Integrate react-native-fbsdk-next + Supabase
-    return {
-      id: "guest_" + Date.now(),
+    const user: AuthUser = {
+      id: `fb_${Date.now()}`,
       provider: "facebook",
     };
-  },
-
-  async signInAsGuest(): Promise<AuthUser> {
-    return {
-      id: "guest_" + Date.now(),
-      displayName: "ضيف",
-      provider: "guest",
-    };
-  },
+    // TODO: react-native-fbsdk-next + Supabase signInWithIdToken
+    this._setUser(user);
+    return user;
+  }
 
   async signOut(): Promise<void> {
-    // TODO: Clear session tokens
-  },
+    this._setUser(null);
+    // TODO: supabase.auth.signOut()
+  }
 
-  async getCurrentUser(): Promise<AuthUser | null> {
-    // TODO: Check active session from Supabase/Firebase
-    return null;
-  },
-};
+  getCurrentUser(): AuthUser | null {
+    return this._user;
+  }
+
+  onAuthStateChanged(cb: (user: AuthUser | null) => void): () => void {
+    this._listeners.push(cb);
+    return () => {
+      this._listeners = this._listeners.filter((l) => l !== cb);
+    };
+  }
+
+  private _setUser(user: AuthUser | null) {
+    this._user = user;
+    this._listeners.forEach((l) => l(user));
+  }
+}
+
+export const authService: IAuthClient = new StubAuthClient();
+export type { AuthUser };

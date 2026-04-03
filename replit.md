@@ -1,61 +1,137 @@
-# Workspace
+# أنا أقدر — Project Overview
 
-## Overview
+Arabic-first mobile habit-breaking app built with Expo/React Native.
+Helps users quit harmful habits (smoking, vaping, social media, etc.), tracks streaks, calculates money saved, and unlocks trophies.
 
-pnpm workspace monorepo using TypeScript. Contains a mobile app "أنا أقدر" (I Can) — an Arabic-first habit-breaking app built with Expo/React Native.
+---
 
-## Stack
+## Architecture (v2 — Production-Ready)
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5 (api-server artifact)
-- **Database**: PostgreSQL + Drizzle ORM (not used by mobile app in v1)
-- **Mobile**: Expo + React Native + expo-router
-- **State management**: React Context + AsyncStorage (mobile)
-- **Font**: Cairo (Arabic-optimized Google Font)
-
-## Key Commands
-
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
-- `pnpm --filter @workspace/mobile run dev` — run Expo dev server
-
-## Mobile App: أنا أقدر
-
-### Screens
-- `app/index.tsx` — Welcome/Splash with animated rotating phrases
-- `app/onboarding/profile.tsx` — Profile setup (nickname, age, currency)
-- `app/onboarding/habit-select.tsx` — Habit selection (smoking, vaping, etc.)
-- `app/onboarding/habit-setup.tsx` — Habit configuration (cost, quit mode)
-- `app/dashboard.tsx` — Main dashboard with live streak timer, stats, AI coach
-- `app/trophies.tsx` — Trophy/Achievement system
-- `app/settings.tsx` — App settings and stats
-
-### Architecture
-- `context/AppContext.tsx` — Global state with AsyncStorage persistence
-- `hooks/useStreak.ts` — Live streak calculations
-- `constants/colors.ts` — Design tokens (deep navy + teal + gold)
-- `constants/trophies.ts` — Trophy definitions
-- `constants/habits.ts` — Habit templates
-
-### Service Stubs (ready for future integration)
-- `services/auth/` — Apple, Google, Facebook, Supabase Auth
-- `services/analytics/` — Firebase Analytics
-- `services/notifications/` — Expo Notifications
-- `services/ai/` — OpenAI Coach (with local fallback messages)
-- `services/subscription/` — RevenueCat + entitlement system
-- `services/database/` — Supabase backend
+### Tech Stack
+- **Frontend**: Expo / React Native (TypeScript)
+- **Navigation**: expo-router (Stack-based, RTL)
+- **State**: Domain-sliced AsyncStorage (schema versioned, migration-ready)
+- **Fonts**: Cairo (Arabic-optimized) via @expo-google-fonts/cairo
+- **API**: Backend stub in `/artifacts/api-server` (Express, port 8080)
 
 ### Design System
-- Background: Deep navy #0D1B2A
-- Primary: Teal #2EC4B6
-- Accent/Gold: #F4A261
-- Font: Cairo (Arabic-optimized)
-- Dark theme by default
+- Background: `#0D1B2A` (deep navy)
+- Primary: `#2EC4B6` (teal)
+- Accent/Gold: `#F4A261`
+- Dark theme only
+- RTL throughout — text aligns right, back arrows use `arrow-forward`
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+---
+
+## Directory Structure (mobile app)
+
+```
+artifacts/mobile/
+├── app/                       # expo-router screens
+│   ├── index.tsx              # Welcome / landing
+│   ├── dashboard.tsx          # Main dashboard (decomposed)
+│   ├── trophies.tsx           # Trophy collection
+│   ├── settings.tsx           # User settings
+│   └── onboarding/            # Onboarding flow
+│       ├── profile.tsx
+│       ├── habit-select.tsx
+│       └── habit-setup.tsx
+│
+├── store/                     # Domain state (v2)
+│   ├── types.ts               # All core types (schema v2)
+│   ├── migrations.ts          # v1→v2 migration engine
+│   └── AppStore.tsx           # Main AppStoreProvider + useAppStore
+│
+├── features/
+│   ├── entitlements/          # Feature flags + premium gating
+│   │   └── index.ts           # getEntitlements(), canUnlockTrophy()
+│   └── trophies/              # Trophy domain logic
+│       └── unlock.ts          # evaluateTrophyUnlocks(), getNextTrophy()
+│
+├── config/
+│   ├── app.ts                 # Static app config
+│   └── env.ts                 # EXPO_PUBLIC_ env vars
+│
+├── services/
+│   ├── contracts/             # Service interfaces (IAnalyticsClient, etc.)
+│   │   └── index.ts
+│   ├── ai/                    # Coach messages (ICoachClient stub)
+│   ├── analytics/             # Analytics (IAnalyticsClient stub)
+│   ├── auth/                  # Auth (IAuthClient stub)
+│   ├── database/              # Database (IDatabaseClient stub)
+│   ├── notifications/         # Notifications (INotificationClient stub)
+│   └── subscription/          # Subscription (ISubscriptionClient stub)
+│
+├── components/
+│   ├── dashboard/             # Dashboard sub-components
+│   │   ├── HeroCard.tsx       # Habit name + progress ring + timer
+│   │   ├── StatsSection.tsx   # Money saved + cravings + cigarettes
+│   │   ├── TrophyBanner.tsx   # Current trophy + next trophy progress
+│   │   ├── CoachCard.tsx      # AI coach message card
+│   │   ├── ActionRow.tsx      # Craving + relapse buttons
+│   │   ├── CravingModal.tsx   # Craving resistance modal
+│   │   └── RelapseModal.tsx   # Relapse reset modal
+│   ├── StatCard.tsx
+│   ├── TrophyCard.tsx
+│   ├── ProgressRing.tsx
+│   └── AnimatedPhrases.tsx
+│
+├── context/
+│   └── AppContext.tsx          # Thin re-export shim → store/AppStore
+│
+├── constants/
+│   ├── habits.ts              # HABIT_TEMPLATES (dynamic form schema)
+│   ├── trophies.ts            # TROPHIES definitions
+│   └── colors.ts              # Color palette
+│
+└── hooks/
+    ├── useColors.ts           # Color theme hook
+    └── useStreak.ts           # Live streak timer + stats
+```
+
+---
+
+## Key Architecture Decisions
+
+### Multi-Habit Support (v2)
+- `habits: HabitConfig[]` + `activeHabitId: string | null`
+- Free users: 1 habit max (enforced by `features/entitlements`)
+- Premium users: up to 10 habits
+
+### Schema Versioning + Migrations
+- `schemaVersion: 2` in stored state
+- V1 (flat `habit: null`) auto-migrates to V2 (habits array)
+- New migrations added in `store/migrations.ts`
+
+### Entitlement System
+- All premium gating through `features/entitlements/index.ts`
+- Never check `subscription.tier` directly in UI
+- Use `getEntitlements(tier).canAddHabit(count)`, etc.
+
+### Trophy Service
+- All unlock logic in `features/trophies/unlock.ts`
+- Dashboard is display-only — calls service, doesn't own logic
+- Premium trophies blocked for free users via entitlements
+
+### Service Contracts
+- All services implement interfaces from `services/contracts/index.ts`
+- Swap concrete adapters (Supabase, Firebase, RevenueCat) without touching UI
+
+### Legacy Compat
+- `context/AppContext.tsx` re-exports from AppStore (backwards compat)
+- `habit` (singular) is an alias for `activeHabit` 
+- `unlockedTrophies` is alias for `trophies.unlockedIds`
+- `subscriptionTier` is alias for `subscription.tier`
+
+---
+
+## Roadmap Integration Points
+
+| Service | Interface | Adapter Path |
+|---------|-----------|--------------|
+| Supabase | IDatabaseClient | services/database |
+| Firebase Analytics | IAnalyticsClient | services/analytics |
+| RevenueCat | ISubscriptionClient | services/subscription |
+| OpenAI (via proxy) | ICoachClient | services/ai |
+| Expo Notifications | INotificationClient | services/notifications |
+| Apple/Google Auth | IAuthClient | services/auth |

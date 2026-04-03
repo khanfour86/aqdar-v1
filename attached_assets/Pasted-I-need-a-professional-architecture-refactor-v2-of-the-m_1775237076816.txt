@@ -1,0 +1,272 @@
+I need a **professional architecture refactor (v2)** of the mobile app based on a senior technical review.
+
+Do NOT add new visual features before fixing the architecture.
+
+This task is a **core refactor and scalability upgrade**.
+
+The current UI and design direction should remain the same.
+
+---
+
+# PRIMARY GOAL
+
+Refactor the application to become production-ready, scalable, and ready for:
+
+* Supabase
+* Firebase Analytics
+* Crash Reporting
+* Expo Notifications
+* OpenAI AI Coach
+* RevenueCat subscriptions
+* Apple / Google in-app subscriptions
+
+This is now a technical architecture task.
+
+---
+
+# 1) CRITICAL STATE MANAGEMENT REFACTOR
+
+The current app uses one large global AsyncStorage blob.
+
+This must be replaced.
+
+Refactor the architecture into **domain-based state slices**.
+
+Create separate stores / reducers / contexts for:
+
+* session
+* profile
+* habits
+* progress
+* trophies
+* subscription
+* settings
+
+AsyncStorage should become **local cache only**, not the primary source of truth.
+
+Add:
+
+* schema validation
+* versioning
+* migrations
+* typed persistence
+
+Example:
+state_version = 1
+
+Future migrations must be supported.
+
+---
+
+# 2) MULTI-HABIT ARCHITECTURE (VERY IMPORTANT)
+
+Currently the app only supports one habit.
+
+This must be refactored immediately.
+
+Replace:
+
+habit: HabitConfig | null
+
+WITH:
+
+habits: HabitConfig[]
+activeHabitId: string | null
+
+This is required because premium users will have multiple habits.
+
+Free users = one habit
+Premium users = multiple habits
+
+The app must support this architecture now.
+
+---
+
+# 3) REAL SUBSCRIPTION ENFORCEMENT
+
+The current subscription system is cosmetic only.
+
+This must be fully enforced.
+
+Build a real entitlement system.
+
+Create:
+
+* feature flags
+* entitlement guards
+* premium access guards
+* route guards
+* UI guards
+
+Examples:
+
+free:
+
+* one habit
+* basic trophies
+* AI messages only
+
+premium:
+
+* multiple habits
+* AI chat coach
+* community
+* premium trophies
+* advanced savings dashboard
+
+Premium trophies must NEVER unlock for free users.
+
+This must be enforced in domain logic, not UI only.
+
+---
+
+# 4) TROPHY SYSTEM REFACTOR
+
+Move trophy unlock logic OUT of dashboard screen.
+
+Create a dedicated trophy domain service:
+
+features/trophies/unlock.ts
+
+This service must:
+
+* validate requirements
+* check premium access
+* unlock trophies
+* prevent duplicate unlocks
+
+Dashboard must only display results.
+
+---
+
+# 5) SPLIT LARGE SCREENS
+
+Several files are too large.
+
+Refactor into reusable components.
+
+Split dashboard into:
+
+* DashboardHero
+* TimerCard
+* SavingsCard
+* TrophyBanner
+* CoachMessageCard
+* ActionButtons
+* CravingModal
+* RelapseModal
+
+Split onboarding profile screen into:
+
+* ProfileForm
+* CurrencySelector
+* OptionalFields
+* ValidationSchema
+
+Split habit setup into reusable dynamic form components.
+
+---
+
+# 6) DYNAMIC HABIT FORM SYSTEM
+
+Current habit setup is too hardcoded.
+
+Refactor into schema-driven renderer.
+
+Habit setup must render from templates dynamically.
+
+Example:
+HABIT_TEMPLATES must drive UI automatically.
+
+This is required so future habits can be added without editing screens.
+
+New habit types must be data-only additions.
+
+---
+
+# 7) ROUTE PROTECTION
+
+Add proper route guards.
+
+Create route groups:
+
+(public)
+(onboarding)
+(app)
+(premium)
+
+Users must NOT be able to deep-link into protected screens.
+
+Dashboard / trophies / settings must validate onboarding completion and entitlements.
+
+---
+
+# 8) REAL SERVICE LAYER
+
+Replace stub service comments with real interfaces.
+
+Create proper service contracts:
+
+* AnalyticsClient
+* SubscriptionClient
+* CoachClient
+* NotificationClient
+* AuthClient
+* DatabaseClient
+
+UI must depend on interfaces.
+
+Prepare adapters for future:
+
+* Supabase
+* Firebase
+* RevenueCat
+* OpenAI
+
+---
+
+# 9) APP CONFIG + ENV
+
+Replace static config with:
+
+app.config.ts
+env.ts
+
+Prepare environment variables for:
+
+* Supabase URL
+* Supabase anon key
+* OpenAI key
+* RevenueCat key
+* Firebase config
+* notification settings
+
+Must be production ready.
+
+---
+
+# 10) TESTS (IMPORTANT)
+
+Add tests for:
+
+* onboarding flow
+* habit creation
+* relapse reset
+* trophy unlock rules
+* premium gating
+* multiple habits
+* migration logic
+
+This is required.
+
+---
+
+# IMPORTANT
+
+Do NOT redesign the UI.
+
+Keep the same Arabic-first visual style.
+
+This task is architecture refactor only.
+
+Focus on production readiness and scalability.

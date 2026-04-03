@@ -1,27 +1,42 @@
+import { IDatabaseClient } from "@/services/contracts";
+
 /**
- * Database Service — stub for future Supabase integration
+ * Database Service — stub implementing IDatabaseClient
  *
- * Future integrations:
- * - @supabase/supabase-js
- * - Real-time sync of habits, streaks, and community data
- * - Cross-device sync
+ * Future integration: @supabase/supabase-js
+ * Provides real-time sync, cross-device, and community features.
  */
+class StubDatabaseClient implements IDatabaseClient {
+  async getProfile(_userId: string): Promise<unknown> {
+    // TODO: supabase.from('profiles').select('*').eq('id', userId).single()
+    return null;
+  }
 
-export const databaseService = {
-  async syncUserProfile(_profile: object): Promise<void> {
-    // TODO: supabase.from('profiles').upsert(profile)
-  },
+  async saveProfile(_userId: string, _data: unknown): Promise<void> {
+    // TODO: supabase.from('profiles').upsert({ id: userId, ...data })
+  }
 
-  async syncHabitData(_habit: object): Promise<void> {
-    // TODO: supabase.from('habits').upsert(habit)
-  },
-
-  async fetchCommunityPosts(_limit = 20): Promise<[]> {
-    // TODO: supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(limit)
+  async getHabits(_userId: string): Promise<unknown[]> {
+    // TODO: supabase.from('habits').select('*').eq('user_id', userId)
     return [];
-  },
+  }
 
-  async createPost(_content: string): Promise<void> {
-    // TODO: supabase.from('posts').insert({ content, user_id: userId })
-  },
-};
+  async saveHabit(_userId: string, _habit: unknown): Promise<void> {
+    // TODO: supabase.from('habits').upsert(habit)
+  }
+
+  async deleteHabit(_userId: string, _habitId: string): Promise<void> {
+    // TODO: supabase.from('habits').delete().eq('id', habitId)
+  }
+
+  async getCravings(_userId: string, _habitId: string): Promise<unknown[]> {
+    // TODO: supabase.from('cravings').select('*').eq('habit_id', habitId)
+    return [];
+  }
+
+  async saveCraving(_userId: string, _craving: unknown): Promise<void> {
+    // TODO: supabase.from('cravings').insert(craving)
+  }
+}
+
+export const databaseService: IDatabaseClient = new StubDatabaseClient();

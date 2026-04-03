@@ -1,4 +1,4 @@
-import { HabitType } from "@/context/AppContext";
+import { HabitType } from "@/store/types";
 
 export interface HabitTemplate {
   type: HabitType;
