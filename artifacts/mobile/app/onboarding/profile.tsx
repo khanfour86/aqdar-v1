@@ -29,15 +29,7 @@ const CURRENCIES = [
   { code: "GBP", symbol: "£", label: "جنيه إسترليني" },
 ];
 
-const AGE_GROUPS = [
-  { value: "15", label: "أقل من 18", range: "<18" },
-  { value: "21", label: "18 – 24", range: "18-24" },
-  { value: "29", label: "25 – 34", range: "25-34" },
-  { value: "39", label: "35 – 44", range: "35-44" },
-  { value: "49", label: "45 – 54", range: "45-54" },
-  { value: "59", label: "55 – 64", range: "55-64" },
-  { value: "65", label: "65 فأكثر", range: "65+" },
-];
+const AGES = Array.from({ length: 83 }, (_, i) => String(i + 18)); // 18 → 100
 
 export default function ProfileSetupScreen() {
   const colors = useColors();
@@ -50,6 +42,7 @@ export default function ProfileSetupScreen() {
   const [gender, setGender] = useState<"male" | "female" | "">("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [showAgeModal, setShowAgeModal] = useState(false);
 
   const selectedCurrency = CURRENCIES.find((c) => c.code === currency)!;
 
@@ -142,47 +135,36 @@ export default function ProfileSetupScreen() {
           ) : null}
         </View>
 
-        {/* Age groups */}
+        {/* Age dropdown */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>
-            الفئة العمرية *
+            العمر *
           </Text>
-          <View style={styles.ageGrid}>
-            {AGE_GROUPS.map((g) => {
-              const selected = ageValue === g.value;
-              return (
-                <TouchableOpacity
-                  key={g.value}
-                  style={[
-                    styles.ageChip,
-                    {
-                      backgroundColor: selected
-                        ? colors.primary + "28"
-                        : colors.card,
-                      borderColor: selected ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => {
-                    setAgeValue(g.value);
-                    if (errors.age) setErrors((e) => ({ ...e, age: "" }));
-                    Haptics.selectionAsync();
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.ageChipText,
-                      {
-                        color: selected ? colors.primary : colors.foreground,
-                        fontWeight: selected ? "700" : "500",
-                      },
-                    ]}
-                  >
-                    {g.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.dropdown,
+              {
+                backgroundColor: colors.card,
+                borderColor: errors.age ? colors.destructive : colors.border,
+              },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowAgeModal(true);
+            }}
+          >
+            <Ionicons name="chevron-down" size={18} color={colors.mutedForeground} />
+            <View style={styles.dropdownValue}>
+              <Text
+                style={[
+                  styles.dropdownLabel,
+                  { color: ageValue ? colors.foreground : colors.mutedForeground },
+                ]}
+              >
+                {ageValue ? `${ageValue} سنة` : "اختر عمرك"}
+              </Text>
+            </View>
+          </TouchableOpacity>
           {errors.age ? (
             <Text style={[styles.errorText, { color: colors.destructive }]}>
               {errors.age}
@@ -291,6 +273,85 @@ export default function ProfileSetupScreen() {
           <Ionicons name="arrow-back" size={20} color={colors.primaryForeground} />
         </TouchableOpacity>
       </View>
+
+      {/* Age Modal */}
+      <Modal visible={showAgeModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+              اختر عمرك
+            </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {AGES.map((age, idx) => {
+                const selected = ageValue === age;
+                return (
+                  <TouchableOpacity
+                    key={age}
+                    style={[
+                      styles.currencyRow,
+                      {
+                        backgroundColor: selected
+                          ? colors.primary + "18"
+                          : "transparent",
+                        borderBottomColor: colors.border,
+                        borderBottomWidth: idx < AGES.length - 1 ? 1 : 0,
+                      },
+                    ]}
+                    onPress={() => {
+                      setAgeValue(age);
+                      if (errors.age) setErrors((e) => ({ ...e, age: "" }));
+                      Haptics.selectionAsync();
+                      setShowAgeModal(false);
+                    }}
+                  >
+                    <View style={styles.currencyRowLeft}>
+                      {selected ? (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={colors.primary}
+                        />
+                      ) : (
+                        <View style={styles.radioEmpty} />
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.currencyRowLabel,
+                        {
+                          color: selected ? colors.primary : colors.foreground,
+                          fontWeight: selected ? "700" : "500",
+                          flex: 1,
+                          textAlign: "right",
+                        },
+                      ]}
+                    >
+                      {age} سنة
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity
+              style={[
+                styles.modalCloseBtn,
+                { borderColor: colors.border, marginTop: 12 },
+              ]}
+              onPress={() => setShowAgeModal(false)}
+            >
+              <Text style={[styles.modalCloseBtnText, { color: colors.mutedForeground }]}>
+                إغلاق
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Currency Modal */}
       <Modal visible={showCurrencyModal} transparent animationType="slide">
@@ -434,20 +495,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorText: { fontSize: 12, textAlign: "right", marginTop: 6 },
-
-  // Age grid
-  ageGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  ageChip: {
-    borderWidth: 1.5,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  ageChipText: { fontSize: 14 },
 
   // Currency dropdown
   dropdown: {
