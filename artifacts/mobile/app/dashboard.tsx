@@ -221,6 +221,18 @@ export default function DashboardScreen() {
           />
         </View>
 
+        {habit?.type === "smoking" && (
+          <View style={styles.statsRow}>
+            <StatCard
+              icon="flame-outline"
+              label="سيجارة تم اجتنابها"
+              value={`${streak.cigarettesAvoided}`}
+              iconColor="#E63946"
+              testID="stat-cigarettes"
+            />
+          </View>
+        )}
+
         {currentTrophy && (
           <View
             style={[

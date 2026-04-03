@@ -11,6 +11,7 @@ export interface StreakStats {
   moneySaved: number;
   cravingsAvoided: number;
   cravingsResisted: number;
+  cigarettesAvoided: number;
 }
 
 export function useStreak(): StreakStats {
@@ -47,6 +48,20 @@ export function useStreak(): StreakStats {
 
   const cravingsResisted = cravings.filter((c) => c.resisted).length;
 
+  // Cigarettes avoided — only meaningful for smoking habit
+  // Formula: 1 pack = 20 cigarettes, awake hours = 16/day
+  // cigarettes per awake hour = (packsPerDay × 20) / 16
+  // total awake hours elapsed = full days × 16 + min(hours today, 16)
+  const packsPerDay = habit?.type === "smoking" ? (habit?.packsPerDay ?? 1) : 0;
+  const cigarettesPerDay = packsPerDay * 20;
+  const awakeHoursPerDay = 16;
+  const cigarettesPerAwakeHour = cigarettesPerDay / awakeHoursPerDay;
+  const fullDays = Math.floor(totalSeconds / 86400);
+  const elapsedHoursToday = (totalSeconds % 86400) / 3600;
+  const awakeHoursToday = Math.min(elapsedHoursToday, awakeHoursPerDay);
+  const totalAwakeHours = fullDays * awakeHoursPerDay + awakeHoursToday;
+  const cigarettesAvoided = Math.floor(totalAwakeHours * cigarettesPerAwakeHour);
+
   return {
     totalSeconds,
     days,
@@ -56,5 +71,6 @@ export function useStreak(): StreakStats {
     moneySaved,
     cravingsAvoided: cravingsResisted,
     cravingsResisted,
+    cigarettesAvoided,
   };
 }
