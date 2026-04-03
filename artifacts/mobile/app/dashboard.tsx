@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Modal,
@@ -27,18 +27,9 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { habit, profile, logCraving, logRelapse, unlockedTrophies, unlockTrophy } = useApp();
   const streak = useStreak();
-  const [tick, setTick] = useState(0);
   const [coachMsg, setCoachMsg] = useState<CoachMessage | null>(null);
   const [showCravingModal, setShowCravingModal] = useState(false);
   const [showRelapseModal, setShowRelapseModal] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    timerRef.current = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     loadCoachMessage();
