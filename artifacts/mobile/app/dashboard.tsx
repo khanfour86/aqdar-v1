@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Modal,
@@ -32,8 +32,16 @@ export default function DashboardScreen() {
   const [showCravingModal, setShowCravingModal] = useState(false);
   const [showRelapseModal, setShowRelapseModal] = useState(false);
 
+  const coachIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     loadCoachMessage();
+    coachIntervalRef.current = setInterval(() => {
+      loadCoachMessage();
+    }, 60_000); // rotate every minute
+    return () => {
+      if (coachIntervalRef.current) clearInterval(coachIntervalRef.current);
+    };
   }, []);
 
   useEffect(() => {
