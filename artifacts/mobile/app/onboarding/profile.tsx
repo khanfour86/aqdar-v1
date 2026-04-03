@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -20,12 +21,22 @@ const CURRENCIES = [
   { code: "KWD", symbol: "د.ك", label: "دينار كويتي" },
   { code: "SAR", symbol: "ر.س", label: "ريال سعودي" },
   { code: "AED", symbol: "د.إ", label: "درهم إماراتي" },
+  { code: "QAR", symbol: "ر.ق", label: "ريال قطري" },
+  { code: "BHD", symbol: "د.ب", label: "دينار بحريني" },
+  { code: "EGP", symbol: "ج.م", label: "جنيه مصري" },
   { code: "USD", symbol: "$", label: "دولار أمريكي" },
   { code: "EUR", symbol: "€", label: "يورو" },
   { code: "GBP", symbol: "£", label: "جنيه إسترليني" },
-  { code: "EGP", symbol: "ج.م", label: "جنيه مصري" },
-  { code: "QAR", symbol: "ر.ق", label: "ريال قطري" },
-  { code: "BHD", symbol: "د.ب", label: "دينار بحريني" },
+];
+
+const AGE_GROUPS = [
+  { value: "15", label: "أقل من 18", range: "<18" },
+  { value: "21", label: "18 – 24", range: "18-24" },
+  { value: "29", label: "25 – 34", range: "25-34" },
+  { value: "39", label: "35 – 44", range: "35-44" },
+  { value: "49", label: "45 – 54", range: "45-54" },
+  { value: "59", label: "55 – 64", range: "55-64" },
+  { value: "65", label: "65 فأكثر", range: "65+" },
 ];
 
 export default function ProfileSetupScreen() {
@@ -34,17 +45,18 @@ export default function ProfileSetupScreen() {
   const { setProfile } = useApp();
 
   const [nickname, setNickname] = useState("");
-  const [age, setAge] = useState("");
+  const [ageValue, setAgeValue] = useState("");
   const [currency, setCurrency] = useState("KWD");
-  const [country, setCountry] = useState("");
   const [gender, setGender] = useState<"male" | "female" | "">("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+
+  const selectedCurrency = CURRENCIES.find((c) => c.code === currency)!;
 
   const validate = () => {
     const e: Record<string, string> = {};
     if (!nickname.trim()) e.nickname = "الاسم مطلوب";
-    if (!age || isNaN(Number(age)) || Number(age) < 10 || Number(age) > 100)
-      e.age = "أدخل عمرًا صحيحًا";
+    if (!ageValue) e.age = "اختر فئتك العمرية";
     return e;
   };
 
@@ -57,9 +69,8 @@ export default function ProfileSetupScreen() {
     }
     setProfile({
       nickname: nickname.trim(),
-      age: Number(age),
+      age: Number(ageValue),
       currency,
-      country: country.trim() || undefined,
       gender: gender || undefined,
     });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -70,6 +81,7 @@ export default function ProfileSetupScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header */}
       <View
         style={[
           styles.header,
@@ -100,6 +112,7 @@ export default function ProfileSetupScreen() {
           هذه المعلومات تساعدنا في تخصيص تجربتك
         </Text>
 
+        {/* Nickname */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>
             اسمك أو لقبك *
@@ -129,29 +142,47 @@ export default function ProfileSetupScreen() {
           ) : null}
         </View>
 
+        {/* Age groups */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>
-            عمرك *
+            الفئة العمرية *
           </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: colors.card,
-                color: colors.foreground,
-                borderColor: errors.age ? colors.destructive : colors.border,
-              },
-            ]}
-            value={age}
-            onChangeText={(t) => {
-              setAge(t);
-              if (errors.age) setErrors((e) => ({ ...e, age: "" }));
-            }}
-            placeholder="عمرك بالسنوات"
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="number-pad"
-            textAlign="right"
-          />
+          <View style={styles.ageGrid}>
+            {AGE_GROUPS.map((g) => {
+              const selected = ageValue === g.value;
+              return (
+                <TouchableOpacity
+                  key={g.value}
+                  style={[
+                    styles.ageChip,
+                    {
+                      backgroundColor: selected
+                        ? colors.primary + "28"
+                        : colors.card,
+                      borderColor: selected ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    setAgeValue(g.value);
+                    if (errors.age) setErrors((e) => ({ ...e, age: "" }));
+                    Haptics.selectionAsync();
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.ageChipText,
+                      {
+                        color: selected ? colors.primary : colors.foreground,
+                        fontWeight: selected ? "700" : "500",
+                      },
+                    ]}
+                  >
+                    {g.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
           {errors.age ? (
             <Text style={[styles.errorText, { color: colors.destructive }]}>
               {errors.age}
@@ -159,73 +190,48 @@ export default function ProfileSetupScreen() {
           ) : null}
         </View>
 
+        {/* Currency dropdown */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>
             العملة *
           </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.currencyScroll}
+          <TouchableOpacity
+            style={[
+              styles.dropdown,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowCurrencyModal(true);
+            }}
           >
-            {CURRENCIES.map((c) => (
-              <TouchableOpacity
-                key={c.code}
-                style={[
-                  styles.currencyChip,
-                  {
-                    backgroundColor:
-                      currency === c.code
-                        ? colors.primary + "33"
-                        : colors.card,
-                    borderColor:
-                      currency === c.code ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  setCurrency(c.code);
-                  Haptics.selectionAsync();
-                }}
-              >
-                <Text
-                  style={[
-                    styles.currencySymbol,
-                    {
-                      color:
-                        currency === c.code
-                          ? colors.primary
-                          : colors.foreground,
-                    },
-                  ]}
-                >
-                  {c.symbol}
-                </Text>
-                <Text
-                  style={[
-                    styles.currencyLabel,
-                    {
-                      color:
-                        currency === c.code
-                          ? colors.primary
-                          : colors.mutedForeground,
-                    },
-                  ]}
-                >
-                  {c.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+            <Ionicons name="chevron-down" size={18} color={colors.mutedForeground} />
+            <View style={styles.dropdownValue}>
+              <Text style={[styles.dropdownSymbol, { color: colors.primary }]}>
+                {selectedCurrency.symbol}
+              </Text>
+              <Text style={[styles.dropdownLabel, { color: colors.foreground }]}>
+                {selectedCurrency.label}
+              </Text>
+            </View>
+            <Text style={[styles.dropdownCode, { color: colors.mutedForeground }]}>
+              {selectedCurrency.code}
+            </Text>
+          </TouchableOpacity>
         </View>
 
+        {/* Gender */}
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>
             الجنس (اختياري)
           </Text>
           <View style={styles.genderRow}>
             {[
-              { value: "male", label: "ذكر" },
-              { value: "female", label: "أنثى" },
+              { value: "male", label: "ذكر", icon: "man-outline" as const },
+              { value: "female", label: "أنثى", icon: "woman-outline" as const },
             ].map((g) => (
               <TouchableOpacity
                 key={g.value}
@@ -233,7 +239,7 @@ export default function ProfileSetupScreen() {
                   styles.genderBtn,
                   {
                     backgroundColor:
-                      gender === g.value ? colors.primary + "33" : colors.card,
+                      gender === g.value ? colors.primary + "28" : colors.card,
                     borderColor:
                       gender === g.value ? colors.primary : colors.border,
                     flex: 1,
@@ -244,14 +250,18 @@ export default function ProfileSetupScreen() {
                   Haptics.selectionAsync();
                 }}
               >
+                <Ionicons
+                  name={g.icon}
+                  size={20}
+                  color={gender === g.value ? colors.primary : colors.mutedForeground}
+                />
                 <Text
                   style={[
                     styles.genderLabel,
                     {
                       color:
-                        gender === g.value
-                          ? colors.primary
-                          : colors.foreground,
+                        gender === g.value ? colors.primary : colors.foreground,
+                      fontWeight: gender === g.value ? "700" : "500",
                     },
                   ]}
                 >
@@ -263,13 +273,11 @@ export default function ProfileSetupScreen() {
         </View>
       </ScrollView>
 
+      {/* Next button */}
       <View
         style={[
           styles.footer,
-          {
-            borderTopColor: colors.border,
-            paddingBottom: insets.bottom + 16,
-          },
+          { borderTopColor: colors.border, paddingBottom: insets.bottom + 16 },
         ]}
       >
         <TouchableOpacity
@@ -280,13 +288,107 @@ export default function ProfileSetupScreen() {
           <Text style={[styles.nextBtnText, { color: colors.primaryForeground }]}>
             التالي
           </Text>
-          <Ionicons
-            name="arrow-back"
-            size={20}
-            color={colors.primaryForeground}
-          />
+          <Ionicons name="arrow-back" size={20} color={colors.primaryForeground} />
         </TouchableOpacity>
       </View>
+
+      {/* Currency Modal */}
+      <Modal visible={showCurrencyModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalSheet,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+              اختر العملة
+            </Text>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {CURRENCIES.map((c, idx) => {
+                const selected = currency === c.code;
+                return (
+                  <TouchableOpacity
+                    key={c.code}
+                    style={[
+                      styles.currencyRow,
+                      {
+                        backgroundColor: selected
+                          ? colors.primary + "18"
+                          : "transparent",
+                        borderBottomColor: colors.border,
+                        borderBottomWidth: idx < CURRENCIES.length - 1 ? 1 : 0,
+                      },
+                    ]}
+                    onPress={() => {
+                      setCurrency(c.code);
+                      Haptics.selectionAsync();
+                      setShowCurrencyModal(false);
+                    }}
+                  >
+                    <View style={styles.currencyRowLeft}>
+                      {selected ? (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={colors.primary}
+                        />
+                      ) : (
+                        <View style={styles.radioEmpty} />
+                      )}
+                    </View>
+                    <View style={styles.currencyRowInfo}>
+                      <Text
+                        style={[
+                          styles.currencyRowLabel,
+                          {
+                            color: selected
+                              ? colors.primary
+                              : colors.foreground,
+                            fontWeight: selected ? "700" : "500",
+                          },
+                        ]}
+                      >
+                        {c.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.currencyRowCode,
+                          { color: colors.mutedForeground },
+                        ]}
+                      >
+                        {c.code}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.currencyRowSymbol,
+                        {
+                          color: selected ? colors.primary : colors.mutedForeground,
+                        },
+                      ]}
+                    >
+                      {c.symbol}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity
+              style={[
+                styles.modalCloseBtn,
+                { borderColor: colors.border, marginTop: 12 },
+              ]}
+              onPress={() => setShowCurrencyModal(false)}
+            >
+              <Text style={[styles.modalCloseBtnText, { color: colors.mutedForeground }]}>
+                إغلاق
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -301,14 +403,8 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  backBtn: {
-    width: 40,
-    alignItems: "center",
-  },
+  headerTitle: { fontSize: 18, fontWeight: "700" },
+  backBtn: { width: 40, alignItems: "center" },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingTop: 28 },
   sectionTitle: {
@@ -323,12 +419,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     lineHeight: 20,
   },
-  formGroup: { marginBottom: 24 },
+  formGroup: { marginBottom: 26 },
   label: {
     fontSize: 15,
     fontWeight: "600",
     textAlign: "right",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   input: {
     borderWidth: 1,
@@ -337,32 +433,58 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
   },
-  errorText: { fontSize: 12, textAlign: "right", marginTop: 4 },
-  currencyScroll: { marginTop: 4 },
-  currencyChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginRight: 10,
-    alignItems: "center",
-    minWidth: 90,
+  errorText: { fontSize: 12, textAlign: "right", marginTop: 6 },
+
+  // Age grid
+  ageGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
-  currencySymbol: { fontSize: 18, fontWeight: "700", marginBottom: 2 },
-  currencyLabel: { fontSize: 11 },
+  ageChip: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  ageChipText: { fontSize: 14 },
+
+  // Currency dropdown
+  dropdown: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  dropdownValue: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 8,
+  },
+  dropdownSymbol: { fontSize: 18, fontWeight: "700" },
+  dropdownLabel: { fontSize: 15, fontWeight: "500" },
+  dropdownCode: { fontSize: 13 },
+
+  // Gender
   genderRow: { flexDirection: "row", gap: 12 },
   genderBtn: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
   },
-  genderLabel: { fontSize: 16, fontWeight: "600" },
-  footer: {
-    padding: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-  },
+  genderLabel: { fontSize: 16 },
+
+  // Footer
+  footer: { padding: 20, paddingTop: 16, borderTopWidth: 1 },
   nextBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -372,4 +494,59 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   nextBtnText: { fontSize: 18, fontWeight: "700" },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "#00000088",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    padding: 24,
+    paddingBottom: 32,
+    maxHeight: "75%",
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  currencyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    gap: 12,
+  },
+  currencyRowLeft: { width: 24, alignItems: "center" },
+  radioEmpty: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#7A94B0",
+  },
+  currencyRowInfo: { flex: 1, alignItems: "flex-end" },
+  currencyRowLabel: { fontSize: 15 },
+  currencyRowCode: { fontSize: 12, marginTop: 2 },
+  currencyRowSymbol: { fontSize: 20, fontWeight: "700", minWidth: 32, textAlign: "center" },
+  modalCloseBtn: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  modalCloseBtnText: { fontSize: 15 },
 });
