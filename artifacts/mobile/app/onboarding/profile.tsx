@@ -29,7 +29,14 @@ const CURRENCIES = [
   { code: "GBP", symbol: "£", label: "جنيه إسترليني" },
 ];
 
-const AGES = Array.from({ length: 83 }, (_, i) => String(i + 18)); // 18 → 100
+const AGE_GROUPS = [
+  { value: "21", label: "18 – 24" },
+  { value: "29", label: "25 – 34" },
+  { value: "39", label: "35 – 44" },
+  { value: "49", label: "45 – 54" },
+  { value: "59", label: "55 – 64" },
+  { value: "65", label: "65 فأكثر" },
+];
 
 export default function ProfileSetupScreen() {
   const colors = useColors();
@@ -161,7 +168,9 @@ export default function ProfileSetupScreen() {
                   { color: ageValue ? colors.foreground : colors.mutedForeground },
                 ]}
               >
-                {ageValue ? `${ageValue} سنة` : "اختر عمرك"}
+                {ageValue
+                ? AGE_GROUPS.find((g) => g.value === ageValue)?.label ?? ageValue
+                : "اختر فئتك العمرية"}
               </Text>
             </View>
           </TouchableOpacity>
@@ -288,11 +297,11 @@ export default function ProfileSetupScreen() {
               اختر عمرك
             </Text>
             <ScrollView showsVerticalScrollIndicator={false}>
-              {AGES.map((age, idx) => {
-                const selected = ageValue === age;
+              {AGE_GROUPS.map((g, idx) => {
+                const selected = ageValue === g.value;
                 return (
                   <TouchableOpacity
-                    key={age}
+                    key={g.value}
                     style={[
                       styles.currencyRow,
                       {
@@ -300,11 +309,11 @@ export default function ProfileSetupScreen() {
                           ? colors.primary + "18"
                           : "transparent",
                         borderBottomColor: colors.border,
-                        borderBottomWidth: idx < AGES.length - 1 ? 1 : 0,
+                        borderBottomWidth: idx < AGE_GROUPS.length - 1 ? 1 : 0,
                       },
                     ]}
                     onPress={() => {
-                      setAgeValue(age);
+                      setAgeValue(g.value);
                       if (errors.age) setErrors((e) => ({ ...e, age: "" }));
                       Haptics.selectionAsync();
                       setShowAgeModal(false);
@@ -332,7 +341,7 @@ export default function ProfileSetupScreen() {
                         },
                       ]}
                     >
-                      {age} سنة
+                      {g.label}
                     </Text>
                   </TouchableOpacity>
                 );
