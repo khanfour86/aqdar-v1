@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useApp } from "@/context/AppContext";
 
@@ -13,14 +13,26 @@ export interface StreakStats {
   cravingsResisted: number;
 }
 
-function computeStats(
-  startDate: string | undefined,
-  dailyCost: number,
-  cravings: { resisted: boolean }[]
-): StreakStats {
-  const start = startDate ? new Date(startDate) : new Date();
+export function useStreak(): StreakStats {
+  const { habit, cravings } = useApp();
+
+  // tick forces a re-render every second — the actual values are computed fresh each time
+  const [tick, setTick] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []); // empty deps — starts once and runs forever
+
+  // Compute fresh on every render (no memoization)
+  const startDate = habit?.startDate ? new Date(habit.startDate) : new Date();
   const now = new Date();
-  const diffMs = Math.max(0, now.getTime() - start.getTime());
+  const diffMs = Math.max(0, now.getTime() - startDate.getTime());
   const totalSeconds = Math.floor(diffMs / 1000);
 
   const days = Math.floor(totalSeconds / 86400);
@@ -28,8 +40,9 @@ function computeStats(
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
+  const dailyCost = habit?.dailyCost ?? 0;
   const moneySaved = parseFloat(
-    ((days + hours / 24 + minutes / 1440) * dailyCost).toFixed(2)
+    ((days + hours / 24 + minutes / 1440) * dailyCost).toFixed(3)
   );
 
   const cravingsResisted = cravings.filter((c) => c.resisted).length;
@@ -44,26 +57,4 @@ function computeStats(
     cravingsAvoided: cravingsResisted,
     cravingsResisted,
   };
-}
-
-export function useStreak(): StreakStats {
-  const { habit, cravings } = useApp();
-
-  const [stats, setStats] = useState<StreakStats>(() =>
-    computeStats(habit?.startDate, habit?.dailyCost ?? 0, cravings)
-  );
-
-  useEffect(() => {
-    const tick = () => {
-      setStats(
-        computeStats(habit?.startDate, habit?.dailyCost ?? 0, cravings)
-      );
-    };
-
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [habit?.startDate, habit?.dailyCost, cravings]);
-
-  return stats;
 }
