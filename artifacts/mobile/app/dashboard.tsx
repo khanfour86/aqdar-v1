@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ProgressRing } from "@/components/ProgressRing";
 import { StatCard } from "@/components/StatCard";
+import { HABIT_TEMPLATES } from "@/constants/habits";
 import { TROPHIES } from "@/constants/trophies";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -154,7 +155,11 @@ export default function DashboardScreen() {
                 أنا أقدر
               </Text>
               <Text style={[styles.habitName, { color: colors.foreground }]}>
-                {`اترك ${habit?.name ?? "العادة"}`}
+                {`اترك ${
+                  habit?.type === "custom"
+                    ? (habit?.customName ?? habit?.name ?? "العادة")
+                    : (HABIT_TEMPLATES.find((t) => t.type === habit?.type)?.nameAr ?? habit?.name ?? "العادة")
+                }`}
               </Text>
             </View>
             <ProgressRing
