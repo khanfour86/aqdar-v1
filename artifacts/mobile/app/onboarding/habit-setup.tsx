@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
+  Keyboard,
   Platform,
   ScrollView,
   StyleSheet,
@@ -118,6 +119,8 @@ export default function HabitSetupScreen() {
               placeholder="أدخل اسم العادة"
               placeholderTextColor={colors.mutedForeground}
               textAlign="right"
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
             />
             {errors.customName ? (
               <Text style={[styles.errorText, { color: colors.destructive }]}>
@@ -182,6 +185,8 @@ export default function HabitSetupScreen() {
             placeholderTextColor={colors.mutedForeground}
             keyboardType="decimal-pad"
             textAlign="right"
+            returnKeyType="done"
+            onSubmitEditing={Keyboard.dismiss}
           />
           {errors.dailyCost ? (
             <Text style={[styles.errorText, { color: colors.destructive }]}>

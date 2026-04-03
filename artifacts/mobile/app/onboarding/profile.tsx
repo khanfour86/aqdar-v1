@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
+  Keyboard,
   Modal,
   Platform,
   ScrollView,
@@ -134,6 +135,8 @@ export default function ProfileSetupScreen() {
             placeholder="أدخل اسمك"
             placeholderTextColor={colors.mutedForeground}
             textAlign="right"
+            returnKeyType="done"
+            onSubmitEditing={Keyboard.dismiss}
           />
           {errors.nickname ? (
             <Text style={[styles.errorText, { color: colors.destructive }]}>
