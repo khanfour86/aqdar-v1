@@ -21,7 +21,7 @@ export const HABIT_TEMPLATES: HabitTemplate[] = [
   {
     type: "smoking",
     nameAr: "التدخين",
-    icon: "no-smoking",
+    icon: "smoking-off",
     iconFamily: "MaterialCommunityIcons",
     color: "#E63946",
     fields: [
@@ -52,7 +52,7 @@ export const HABIT_TEMPLATES: HabitTemplate[] = [
   {
     type: "vaping",
     nameAr: "الفيب",
-    icon: "smoking-off",
+    icon: "weather-fog",
     iconFamily: "MaterialCommunityIcons",
     color: "#8338EC",
     fields: [
