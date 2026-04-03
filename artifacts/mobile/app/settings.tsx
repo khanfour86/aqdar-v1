@@ -17,6 +17,15 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useStreak } from "@/hooks/useStreak";
 
+const AGE_GROUPS = [
+  { value: "21", label: "18 – 24" },
+  { value: "29", label: "25 – 34" },
+  { value: "39", label: "35 – 44" },
+  { value: "49", label: "45 – 54" },
+  { value: "59", label: "55 – 64" },
+  { value: "65", label: "65 فأكثر" },
+];
+
 export default function SettingsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -57,7 +66,9 @@ export default function SettingsScreen() {
         {
           icon: "calendar-outline" as const,
           label: "العمر",
-          value: profile?.age ? `${profile.age} سنة` : "—",
+          value: profile?.age
+            ? (AGE_GROUPS.find((g) => g.value === String(profile.age))?.label ?? `${profile.age} سنة`)
+            : "—",
           color: colors.primary,
         },
         {
