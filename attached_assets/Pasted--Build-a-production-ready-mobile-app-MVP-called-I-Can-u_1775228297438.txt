@@ -1,0 +1,245 @@
+**Build a production-ready mobile app MVP called “أنا أقدر” (I Can) using React Native with Expo and a scalable architecture prepared for future integrations.**
+
+The app concept is a habit-breaking and self-improvement application focused on helping Arabic-speaking users quit harmful habits such as smoking, vaping, digital addiction, and other custom habits.
+
+---
+
+## Core Product Vision
+
+The app should feel modern, motivational, emotionally supportive, and highly intuitive.
+
+The design language should be:
+
+* clean
+* premium
+* minimal
+* psychologically calming
+* modern Arabic-first UI
+
+Use a professional color palette that matches the idea of self-control, healing, progress, and achievement.
+
+Suggested color direction:
+
+* calming dark navy / deep blue as base
+* supportive green for progress
+* gold / soft amber for trophies and achievements
+* white / light gray cards
+* subtle gradients for hero sections
+
+The branding should feel elegant and simple.
+
+---
+
+## App Branding
+
+The app name must be displayed as:
+
+**أنا أقدر**
+
+Use a clean Arabic typography style.
+
+The app logo should be text-based and minimal.
+
+Make the app name visually strong and premium.
+
+Under the app name on the splash / onboarding screen, create animated rotating phrases such as:
+
+* أوقف التدخين
+* أترك الفيب
+* أتحكم بنفسي
+* أبدأ من جديد
+* أقدر أكمل
+
+These phrases should animate smoothly under the main title.
+
+Example behavior:
+The phrase fades/slides out and another phrase fades/slides in.
+
+Keep the animation elegant and modern.
+
+---
+
+## Screens to Build
+
+### 1. Splash / Welcome Screen
+
+* centered app name “أنا أقدر”
+* animated supporting phrases underneath
+* modern CTA buttons
+* login options:
+
+  * Apple
+  * Google
+  * Facebook
+  * Guest mode
+
+---
+
+### 2. Profile Setup Screen
+
+Required fields:
+
+* nickname (required)
+* age (required)
+* currency (required)
+
+Optional:
+
+* country
+* gender
+
+Currency must be stored at account level in settings, not per habit.
+
+---
+
+### 3. Habit Selection Screen
+
+Beautiful icon-based selection cards for:
+
+* Smoking
+* Vape
+* Social media
+* Digital harmful content
+* Caffeine
+* Custom habit
+
+Free version should allow one habit only.
+
+Architecture must support multiple habits later.
+
+---
+
+### 4. Habit Setup Screen
+
+For smoking example:
+
+* packs per day
+* daily cost
+* quit mode:
+
+  * immediate
+  * gradual
+
+The architecture must support reusable habit configuration templates for all future habits.
+
+---
+
+### 5. Main Dashboard
+
+Must include:
+
+* live streak timer
+* days / hours
+* total money saved
+* avoided count
+* current trophy
+* progress ring
+* motivational AI message card
+* craving button
+* relapse button
+
+Important buttons:
+
+* “أشعر برغبة الآن”
+* “تعثرت اليوم”
+
+---
+
+### 6. Trophy / Achievement System
+
+Design and implement a scalable trophy system.
+
+Create visually beautiful trophy cards and icons.
+
+Examples:
+
+* بداية جديدة
+* أول 24 ساعة
+* 3 أيام
+* أسبوع
+* وفرت 10 د.ك
+* أول شهر
+
+The trophy system must be extensible for premium achievements.
+
+Please design the trophy visuals professionally.
+
+---
+
+## IMPORTANT ARCHITECTURE REQUIREMENTS
+
+Prepare the full infrastructure for future integrations even if they are not fully connected yet.
+
+The app must be architected for:
+
+### Future integrations
+
+* Supabase backend
+* Firebase analytics
+* Crash reporting
+* Expo notifications
+* OpenAI AI coach
+* RevenueCat subscriptions
+* Apple / Google in-app subscriptions
+
+Prepare clean service layers and provider files for these integrations.
+
+Example folders:
+
+* services/auth
+* services/notifications
+* services/analytics
+* services/ai
+* services/subscription
+* services/database
+
+Use clean modular architecture.
+
+---
+
+## Subscription Infrastructure (VERY IMPORTANT)
+
+Even though the first release is free, prepare the app structure for premium subscriptions.
+
+Build:
+
+* feature flags
+* entitlement system
+* premium access guards
+* free vs premium logic
+* subscription state management
+
+Examples:
+
+* free user = one habit
+* premium = multiple habits + AI coach + community
+
+Prepare UI placeholders for future paywall screens.
+
+---
+
+## Community (prepare structure only)
+
+Do not fully build yet, but prepare screens and architecture placeholders for:
+
+* user posts
+* likes
+* streak sharing
+* motivational community feed
+
+---
+
+## Technical Requirements
+
+Use:
+
+* React Native
+* Expo
+* TypeScript
+* clean reusable components
+* scalable folder structure
+* modern state management
+
+The codebase must be clean and scalable for production.
+
+Focus on excellent UI/UX and future-proof architecture.

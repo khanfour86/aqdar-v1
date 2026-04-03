@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "h372wkUo7cLKvoQouO8tq"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "ana-aquder-app-icon"
