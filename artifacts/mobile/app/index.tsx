@@ -19,13 +19,17 @@ import { useColors } from "@/hooks/useColors";
 export default function WelcomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { isOnboarded, isLoading } = useApp();
+  const { isOnboarded, habit, isLoading, resetApp } = useApp();
 
   useEffect(() => {
-    if (!isLoading && isOnboarded) {
+    if (isLoading) return;
+    if (isOnboarded && habit) {
       router.replace("/dashboard");
+    } else if (isOnboarded && !habit) {
+      // Broken state: marked as onboarded but habit data is missing — reset and re-onboard
+      resetApp();
     }
-  }, [isLoading, isOnboarded]);
+  }, [isLoading, isOnboarded, habit]);
 
   if (isLoading) {
     return (

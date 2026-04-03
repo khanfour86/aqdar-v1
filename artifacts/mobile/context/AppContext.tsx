@@ -4,6 +4,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -83,6 +84,11 @@ const STORAGE_KEY = "@ana_aquder_state";
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [isLoading, setIsLoading] = useState(true);
+  const stateRef = useRef<AppState>(defaultState);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     loadState();
@@ -92,7 +98,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
-        setState(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        setState(parsed);
+        stateRef.current = parsed;
       }
     } catch {
       // ignore
@@ -101,10 +109,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const saveState = useCallback(async (newState: AppState) => {
-    setState(newState);
+  const persist = useCallback(async (next: AppState) => {
+    stateRef.current = next;
+    setState(next);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
       // ignore
     }
@@ -112,21 +121,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setProfile = useCallback(
     (profile: UserProfile) => {
-      saveState({ ...state, profile });
+      persist({ ...stateRef.current, profile });
     },
-    [state, saveState]
+    [persist]
   );
 
   const setHabit = useCallback(
     (habit: HabitConfig) => {
-      saveState({ ...state, habit });
+      persist({ ...stateRef.current, habit });
     },
-    [state, saveState]
+    [persist]
   );
 
   const completeOnboarding = useCallback(() => {
-    saveState({ ...state, isOnboarded: true });
-  }, [state, saveState]);
+    persist({ ...stateRef.current, isOnboarded: true });
+  }, [persist]);
 
   const logCraving = useCallback(
     (resisted: boolean) => {
@@ -135,13 +144,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         timestamp: new Date().toISOString(),
         resisted,
       };
-      const newState = {
-        ...state,
-        cravings: [entry, ...state.cravings],
-      };
-      saveState(newState);
+      persist({
+        ...stateRef.current,
+        cravings: [entry, ...stateRef.current.cravings],
+      });
     },
-    [state, saveState]
+    [persist]
   );
 
   const logRelapse = useCallback(() => {
@@ -149,32 +157,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString(),
     };
-    const newHabit = state.habit
-      ? { ...state.habit, startDate: new Date().toISOString() }
+    const cur = stateRef.current;
+    const newHabit = cur.habit
+      ? { ...cur.habit, startDate: new Date().toISOString() }
       : null;
-    const newState = {
-      ...state,
+    persist({
+      ...cur,
       habit: newHabit,
-      relapses: [entry, ...state.relapses],
-    };
-    saveState(newState);
-  }, [state, saveState]);
+      relapses: [entry, ...cur.relapses],
+    });
+  }, [persist]);
 
   const unlockTrophy = useCallback(
     (id: string) => {
-      if (!state.unlockedTrophies.includes(id)) {
-        saveState({
-          ...state,
-          unlockedTrophies: [...state.unlockedTrophies, id],
+      const cur = stateRef.current;
+      if (!cur.unlockedTrophies.includes(id)) {
+        persist({
+          ...cur,
+          unlockedTrophies: [...cur.unlockedTrophies, id],
         });
       }
     },
-    [state, saveState]
+    [persist]
   );
 
   const resetApp = useCallback(() => {
-    saveState(defaultState);
-  }, [saveState]);
+    persist(defaultState);
+  }, [persist]);
 
   return (
     <AppContext.Provider
