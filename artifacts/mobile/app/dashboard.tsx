@@ -151,10 +151,10 @@ export default function DashboardScreen() {
           <View style={styles.heroTop}>
             <View style={styles.habitInfo}>
               <Text style={[styles.habitLabel, { color: colors.mutedForeground }]}>
-                تركت
+                أنا أقدر
               </Text>
               <Text style={[styles.habitName, { color: colors.foreground }]}>
-                {habit?.name ?? "العادة الضارة"}
+                {`اترك ${habit?.name ?? "العادة"}`}
               </Text>
             </View>
             <ProgressRing
