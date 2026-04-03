@@ -18,10 +18,21 @@ import {
   UserProfile,
 } from "./types";
 import { runMigrations } from "./migrations";
+import { TROPHIES } from "@/constants/trophies";
+import { canUnlockTrophy, getEntitlements } from "@/features/entitlements";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = "@ana_aquder_state_v2";
+
+// ─── Error types ──────────────────────────────────────────────────────────────
+
+export class HabitLimitError extends Error {
+  constructor() {
+    super("حد العادات المجانية: تحتاج للاشتراك المميز لإضافة عادات إضافية.");
+    this.name = "HabitLimitError";
+  }
+}
 
 // ─── Context value ────────────────────────────────────────────────────────────
 
@@ -37,8 +48,8 @@ export interface AppStoreValue extends AppState {
   // Profile
   setProfile: (p: UserProfile) => void;
 
-  // Habits
-  addHabit: (h: Omit<HabitConfig, "id" | "createdAt">) => string;
+  // Habits — addHabit returns null if entitlement check fails
+  addHabit: (h: Omit<HabitConfig, "id" | "createdAt">) => string | null;
   updateHabit: (id: string, patch: Partial<HabitConfig>) => void;
   removeHabit: (id: string) => void;
   setActiveHabit: (id: string) => void;
@@ -47,22 +58,19 @@ export interface AppStoreValue extends AppState {
   logCraving: (resisted: boolean) => void;
   logRelapse: () => void;
 
-  // Trophies
+  // Trophies — premium trophies silently blocked for free users at this boundary
   unlockTrophy: (id: string) => void;
 
   // Subscription
   setSubscriptionTier: (tier: SubscriptionTier) => void;
 
-  // Legacy helpers (backwards-compat)
+  // Legacy compat helpers (read-only aliases)
   habit: HabitConfig | null;
   unlockedTrophies: string[];
   cravings: CravingEntry[];
   relapses: RelapseEntry[];
   isOnboarded: boolean;
   subscriptionTier: SubscriptionTier;
-
-  // Legacy setHabit (single-habit onboarding)
-  setHabit: (h: Omit<HabitConfig, "id" | "createdAt">) => void;
 }
 
 const AppStoreContext = createContext<AppStoreValue | null>(null);
@@ -77,7 +85,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
-        // Try new key first, fall back to old key
         let raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (!raw) {
           raw = await AsyncStorage.getItem("@ana_aquder_state");
@@ -89,7 +96,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           setState(migrated);
         }
       } catch {
-        // ignore parse errors
+        // ignore parse errors — stay on DEFAULT_STATE
       } finally {
         setIsLoading(false);
       }
@@ -106,7 +113,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // ─── Session ────────────────────────────────────────────────────────────────
+  // ─── Session ─────────────────────────────────────────────────────────────────
 
   const completeOnboarding = useCallback(() => {
     persist({ ...ref.current, session: { isOnboarded: true } });
@@ -115,9 +122,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const resetApp = useCallback(() => {
     persist(DEFAULT_STATE);
     AsyncStorage.removeItem("@ana_aquder_state").catch(() => {});
+    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
   }, [persist]);
 
-  // ─── Profile ────────────────────────────────────────────────────────────────
+  // ─── Profile ─────────────────────────────────────────────────────────────────
 
   const setProfile = useCallback(
     (profile: UserProfile) => {
@@ -126,13 +134,27 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     [persist]
   );
 
-  // ─── Habits ─────────────────────────────────────────────────────────────────
+  // ─── Habits ──────────────────────────────────────────────────────────────────
+  // DOMAIN INTEGRITY: entitlement check enforced here — the ONLY write path.
+  // No other function may bypass this guard.
 
   const addHabit = useCallback(
-    (h: Omit<HabitConfig, "id" | "createdAt">): string => {
+    (h: Omit<HabitConfig, "id" | "createdAt">): string | null => {
+      const cur = ref.current;
+      const entitlements = getEntitlements(cur.subscription.tier);
+
+      if (!entitlements.canAddHabit(cur.habits.length)) {
+        // Block at domain boundary — free users cannot exceed their habit limit.
+        if (__DEV__) {
+          console.warn(
+            `[Store] addHabit blocked: free user at habit limit (${cur.habits.length})`
+          );
+        }
+        return null;
+      }
+
       const id = `habit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       const habit: HabitConfig = { ...h, id, createdAt: new Date().toISOString() };
-      const cur = ref.current;
       persist({
         ...cur,
         habits: [...cur.habits, habit],
@@ -163,7 +185,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         habits: remaining,
         activeHabitId:
           cur.activeHabitId === id
-            ? remaining[0]?.id ?? null
+            ? (remaining[0]?.id ?? null)
             : cur.activeHabitId,
       });
     },
@@ -222,11 +244,27 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   }, [persist]);
 
   // ─── Trophies ────────────────────────────────────────────────────────────────
+  // DOMAIN INTEGRITY: premium trophy protection enforced here — the ONLY write path.
 
   const unlockTrophy = useCallback(
     (id: string) => {
       const cur = ref.current;
+
       if (cur.trophies.unlockedIds.includes(id)) return;
+
+      const trophy = TROPHIES.find((t) => t.id === id);
+      if (!trophy) return;
+
+      // Block premium trophies for free users at the domain boundary.
+      if (!canUnlockTrophy(trophy.isPremium, cur.subscription.tier)) {
+        if (__DEV__) {
+          console.warn(
+            `[Store] unlockTrophy blocked: premium trophy "${id}" for free user`
+          );
+        }
+        return;
+      }
+
       persist({
         ...cur,
         trophies: { unlockedIds: [...cur.trophies.unlockedIds, id] },
@@ -242,23 +280,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       persist({
         ...ref.current,
         subscription: { ...ref.current.subscription, tier },
-      });
-    },
-    [persist]
-  );
-
-  // ─── Legacy setHabit (single-habit onboarding flow) ──────────────────────────
-
-  const setHabit = useCallback(
-    (h: Omit<HabitConfig, "id" | "createdAt">) => {
-      const cur = ref.current;
-      const id = `habit_${Date.now()}`;
-      const habit: HabitConfig = { ...h, id, createdAt: new Date().toISOString() };
-      // For free users doing onboarding: replace any existing habit (limit = 1)
-      persist({
-        ...cur,
-        habits: [habit],
-        activeHabitId: id,
       });
     },
     [persist]
@@ -286,9 +307,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     logRelapse,
     unlockTrophy,
     setSubscriptionTier,
-    setHabit,
 
-    // Legacy compat
+    // Legacy read-only compat aliases
     habit: activeHabit,
     unlockedTrophies: state.trophies.unlockedIds,
     cravings: state.progress.cravings,

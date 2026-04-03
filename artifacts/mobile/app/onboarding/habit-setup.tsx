@@ -22,7 +22,8 @@ export default function HabitSetupScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { type } = useLocalSearchParams<{ type: HabitType }>();
-  const { setHabit, completeOnboarding, profile } = useApp();
+  // Fix 4: use addHabit (the canonical write path) — setHabit is removed.
+  const { addHabit, completeOnboarding, profile } = useApp();
 
   const template = HABIT_TEMPLATES.find((h) => h.type === type);
 
@@ -50,7 +51,10 @@ export default function HabitSetupScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
-    setHabit({
+
+    // addHabit is the single canonical write path — entitlement-checked at domain level.
+    // During onboarding the user always has 0 habits, so this will always succeed.
+    const id = addHabit({
       type: type ?? "custom",
       name: template?.nameAr ?? customName,
       packsPerDay: Number(packsPerDay),
@@ -59,6 +63,13 @@ export default function HabitSetupScreen() {
       customName: customName.trim() || undefined,
       startDate: new Date().toISOString(),
     });
+
+    if (!id) {
+      // Unexpected: entitlement blocked during onboarding — should not happen.
+      setErrors({ dailyCost: "حدث خطأ غير متوقع. أعد المحاولة." });
+      return;
+    }
+
     completeOnboarding();
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace("/dashboard");

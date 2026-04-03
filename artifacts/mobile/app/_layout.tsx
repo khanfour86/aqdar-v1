@@ -21,17 +21,10 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="dashboard" />
-      <Stack.Screen name="trophies" />
-      <Stack.Screen name="settings" />
-      <Stack.Screen name="onboarding/profile" />
-      <Stack.Screen name="onboarding/habit-select" />
-      <Stack.Screen name="onboarding/habit-setup" />
-    </Stack>
-  );
+  // All screens are auto-discovered by Expo Router's file-system routing.
+  // Route groups (app) and onboarding/ have their own _layout.tsx guards.
+  // headerShown: false is applied globally via screenOptions.
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
