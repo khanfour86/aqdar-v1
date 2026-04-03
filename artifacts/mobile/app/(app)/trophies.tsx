@@ -91,24 +91,24 @@ export default function TrophiesScreen() {
           ))}
         </View>
 
-        <View
+        <TouchableOpacity
+          onPress={() => router.push("/premium")}
           style={[
             styles.premiumBanner,
             { backgroundColor: colors.navyMid, borderColor: colors.border },
           ]}
+          activeOpacity={0.85}
         >
           <Ionicons name="diamond" size={20} color={colors.gold} />
           <Text style={[styles.premiumBannerText, { color: colors.foreground }]}>
             افتح الإنجازات المميزة مع الاشتراك
           </Text>
-          <TouchableOpacity
-            style={[styles.premiumBtn, { backgroundColor: colors.gold }]}
-          >
+          <View style={[styles.premiumBtn, { backgroundColor: colors.gold }]}>
             <Text style={[styles.premiumBtnText, { color: colors.navy }]}>
               اشترك
             </Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

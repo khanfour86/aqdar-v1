@@ -228,6 +228,31 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {subscriptionTier !== "premium" && (
+          <TouchableOpacity
+            style={[
+              styles.premiumUpgradeBtn,
+              {
+                backgroundColor: colors.gold + "18",
+                borderColor: colors.gold + "55",
+              },
+            ]}
+            onPress={() => router.push("/premium")}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="diamond" size={18} color={colors.gold} />
+            <View style={styles.premiumUpgradeText}>
+              <Text style={[styles.premiumUpgradeTitle, { color: colors.gold }]}>
+                ترقية إلى المميز
+              </Text>
+              <Text style={[styles.premiumUpgradeDesc, { color: colors.mutedForeground }]}>
+                عادات متعددة · مدرب AI · إنجازات حصرية
+              </Text>
+            </View>
+            <Ionicons name="chevron-back" size={18} color={colors.gold} />
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[
             styles.resetBtn,
@@ -314,6 +339,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   comingSoonText: { fontSize: 11, fontWeight: "700" },
+  premiumUpgradeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    marginBottom: 16,
+  },
+  premiumUpgradeText: { flex: 1, alignItems: "flex-end" },
+  premiumUpgradeTitle: { fontSize: 15, fontWeight: "700" },
+  premiumUpgradeDesc: { fontSize: 12, marginTop: 2, textAlign: "right" },
+
   resetBtn: {
     flexDirection: "row",
     alignItems: "center",

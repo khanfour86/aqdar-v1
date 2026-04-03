@@ -29,10 +29,14 @@ Helps users quit harmful habits (smoking, vaping, social media, etc.), tracks st
 artifacts/mobile/
 ├── app/                       # expo-router screens
 │   ├── index.tsx              # Welcome / landing
-│   ├── dashboard.tsx          # Main dashboard (decomposed)
-│   ├── trophies.tsx           # Trophy collection
-│   ├── settings.tsx           # User settings
-│   └── onboarding/            # Onboarding flow
+│   ├── (app)/                 # Protected route group (guard: onboarded + habit)
+│   │   ├── _layout.tsx        # Route guard → redirects to / if not onboarded
+│   │   ├── dashboard.tsx      # Main dashboard (decomposed)
+│   │   ├── trophies.tsx       # Trophy collection
+│   │   ├── settings.tsx       # User settings
+│   │   └── premium.tsx        # Premium subscription paywall screen
+│   └── onboarding/            # Onboarding flow (guard: redirects if already onboarded)
+│       ├── _layout.tsx
 │       ├── profile.tsx
 │       ├── habit-select.tsx
 │       └── habit-setup.tsx
